@@ -47,3 +47,12 @@ all 5 bugs) lives in services/.
    for an existing Rating (unique constraint on user_id+song_id) — updates
    it if found, creates one if not, commits.
 4. Route returns rating.to_dict() as JSON, 201.
+
+## Plan
+Starting with #1 (streak) and #5 (playlist) since both already have failing
+tests I can use to confirm the bug quickly. 
+
+Then #4 (notifications), since the hint points to comparing it against the working add_to_playlist pattern.
+
+Saving #2 (feed) and #3 (search) for last since they're flagged as more
+involved (conditional/architectural).
