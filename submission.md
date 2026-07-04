@@ -277,3 +277,58 @@ for a 3-tag song, confirming the fix holds structurally rather than by
 accident. Confirmed tags still appear correctly in results, since
 to_dict() loads them via the independent Song.tags relationship,
 unaffected by this change.
+
+## AI Usage
+
+I used Claude throughout this project, primarily for codebase orientation
+and for understanding *why* code behaved unexpectedly — not to identify
+bugs before I'd read the relevant code myself.
+
+**Codebase navigation:** Early on, I asked for a walkthrough of each
+service file's responsibilities and a traced data flow (the rate-a-song
+example in my codebase map) before touching any of the 5 issues, to build
+a mental model of the app.
+
+**For creating bug reproducing python files** I asked Claude to draft the
+initial repro scripts for each bug (e.g., bug1_streak.py, bug4_notifications.py,
+bug2_feed.py) as isolated Python scripts that call the relevant service
+function directly with controlled inputs, rather than going through the
+Flask app or HTTP requests. I ran each one myself and read the output before
+concluding a bug was confirmed -- for example, I didn't just accept "this
+should reproduce the bug," I checked the actual printed values against what
+was expected.
+
+**Debugging Bug #3 (search duplicates):** This was the case where AI
+helped most, because the result was counterintuitive. My test for this
+bug passed even though I suspected the code was still buggy. I asked
+specifically why SQLAlchemy's query API might return 1 row when the
+underlying join produced 3 raw SQL rows. The explanation (SQLAlchemy's
+legacy Query API automatically de-duplicates full-entity results by
+primary key) was something I verified myself by running the same join
+through SQLAlchemy's newer select()/scalars() API, which does not
+auto-dedupe -- that returned 3 rows for the same data, confirming the
+explanation rather than just trusting it.
+
+**For Wrtiting test files** I asked Claude to draft the pytest test files
+for the two services that had no existing coverage (test_feed.py and
+test_notifications.py), following the same fixture pattern already used in
+the repo's existing tests (test_streaks.py, test_playlists.py). I reviewed
+each test before committing it -- I removed one test (a sanity check for
+add_to_playlist) after discovering it exercised an unrelated, pre-existing
+bug in that function rather than the behavior I was actually testing, and
+adjusted the test file so it only covered what was relevant to my fix.
+
+**Where I verified rather than trusted:** For every bug, I confirmed the
+suggested root cause by running my own reproduction script or the
+existing test suite before writing it into my RCA entry -- for example,
+for Bug #1 I added a temporary print statement to see today.weekday()
+return 6 on the failing Sunday case myself, rather than accepting an
+explanation of the bug without seeing the actual value.
+
+**Where AI's first framing wasn't quite complete:** For Bug #3, the
+initial framing focused on "the join causes duplicates," which is true
+at the SQL level but doesn't explain why the tests were passing. I had
+to push further -- comparing legacy Query vs. select() behavior directly
+-- to understand the actual gap between the SQL-level bug and the
+observed (masked) behavior.
+
