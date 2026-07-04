@@ -10,7 +10,10 @@ from app import db
 from models import User, Song, ListeningEvent
 
 
-RECENT_THRESHOLD = timedelta(hours=24)
+# "Listening Now" should reflect real-time presence, not a rolling recap
+# of the last calendar day. 30 minutes keeps the feed feeling live;
+# get_activity_feed() below is the place for a longer-history view.
+RECENT_THRESHOLD = timedelta(minutes=30)
 
 
 def get_friends_listening_now(user_id: str) -> list[dict]:
